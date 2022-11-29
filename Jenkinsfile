@@ -50,20 +50,12 @@ pipeline {
       stage('Static Analysis') {
          steps {
           parallel (
-             SCA: {
-                withCredentials([usernamePassword(credentialsId: 'archerysec', passwordVariable: 'ARCHERY_PASS', usernameVariable: 'ARCHERY_USER')]) {
-                sh '''
-                  export COMMIT_ID=`cat .git/HEAD`
-                  export DCHIGH=25
-                  export DCMEDIUM=100
-                  ls
-                  dependency-check --noupdate --project "Devsecops" --scan target/*.war -f XML --disableOssIndex -o $WORKSPACE/reports/dependency-check.xml
-                  bash ${WORKSPACE}/scripts/dependency_check/dependency_check.sh
-
-                '''
-                }
-              },
-
+            SCA: {
+               echo  'Dependency Check'
+            },
+            SAST: {
+                  echo  'FindSecBugs'
+            }
           )
         }
       }
@@ -134,6 +126,13 @@ pipeline {
                            exit 100
                         fi
                      '''
+                  },
+                  DAST: {
+                     withCredentials([usernamePassword(credentialsId: 'archerysec', passwordVariable: 'ARCHERY_PASS', usernameVariable: 'ARCHERY_USER')]) {
+                     sh '''
+                        bash ${WORKSPACE}/scripts/zapscanner/zapscanner_cli.sh
+                     '''
+                     }
                   },
                )
          }
